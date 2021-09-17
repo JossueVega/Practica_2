@@ -1,16 +1,3 @@
-const firebaseConfig = {
-    apiKey: "AIzaSyBYcz37BsGhDgLFTqDbSF56X5w_ynWsXEA",
-    authDomain: "practica1-js.firebaseapp.com",
-    databaseURL: "https://practica1-js-default-rtdb.firebaseio.com",
-    projectId: "practica1-js",
-    storageBucket: "practica1-js.appspot.com",
-    messagingSenderId: "98263035779",
-    appId: "1:98263035779:web:d29fe69022d4752fa910b6",
-    measurementId: "G-94RVHH5SW6"
-  };
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-
 
 function resetFields(){
     document.getElementById("Input1").value='';
@@ -22,7 +9,6 @@ function resetFields(){
     document.getElementById("Input7").value='seleccionar';
 }
 function createR() {
-    document.getElementById("Input1").disabled = false;
     //Guardo los datos capturados usando el id de cada control
     var id = document.getElementById("Input1").value;
     var nombre = document.getElementById("Input2").value;
@@ -47,55 +33,60 @@ function createR() {
         }
 
         //console.log(alumno);
+        var lista_empleados=JSON.parse(localStorage.getItem("Negocios"));
 
-        firebase.database().ref('Negocios/' + id).update(empleados).then(() => {
-           resetFields();
-        }).then(()=>{
-           read();
-        });
-
-        swal("Listo!", "Agregado correctamente", "success");
-
+        if(lista_empleados==null)
+        { 
+            var lista_empleados = [];
+        }
         
+        const existe = lista_empleados.some(element=>element.id==id); 
+
+        if(!existe||document.getElementById("Input1").disabled==true)
+        {
+            
+            if(document.getElementById("Input1").disabled==true)
+            {
+                var lista_empleados=lista_empleados.filter(empleados=>empleados.id!=id);
+
+            }
+                
+            lista_empleados.push(empleados);
+            var temporal = lista_empleados.sort((a,b) => a.id-b.id);
+            localStorage.setItem("Negocios", JSON.stringify(temporal));
+            
+            read();
+            resetFields();
+            swal("Listo!", "Agregado correctamente", "success");
+
+        }
+        else
+        {
+            swal("Error", "Ya existe ese id de empleado","warning");
+        }
+
     } 
-    else {
+    else 
+    {
         swal("Error", "Llena todos los campos","warning");
     }
 
     document.getElementById("Input1").disabled = false;
-        //firebase.database().ref('users/' + userId).set({
-    //    username: name,
-    //    email: email,
-    //    profile_picture : imageUrl
-    //  });
-    //https://firebase.google.com/docs/database/web/read-and-write?hl=es
-
-  
-    //Esto se usa cuando no tienen un id/matricula y Firebase les genera una
-    //automaticamente
-    //const key = firebase.database().ref().child('Alumnos').push().key;
-    //data[`Alumnos/${key}`]= alumno;
-    //firebase.database().ref().update(data).then(()=>{
-    //  alert('Agregado exitosamente');
-    //})
+    
 }
 
 function read(){
     document.getElementById("Table1").innerHTML='';
+    
 
-    var ref = firebase.database().ref('Negocios');
-/**   
-   ref.on('value', function(snapshot) {
-        snapshot.forEach(row=>{
-            printRow(row.val());
-        })
-    });
- */
-   
-    ref.on("child_added", function(snapshot) {
-        printRow(snapshot.val());
-    });
-
+    const lista_empleados = JSON.parse(localStorage.getItem("Negocios"));
+    
+     
+    if(lista_empleados)
+    {
+        lista_empleados.forEach((empleados)=>printRow(empleados));
+    }
+ 
 }
 
 function printRow(empleados){
@@ -131,18 +122,23 @@ function printRow(empleados){
 }
 
 function deleteR(id){
-    firebase.database().ref('Negocios/' + id).set(null).then(() => {
-      read();
-    }).then(()=>{
-       swal("Listo!", "Eliminado correctamente", "success");
-    });
+    const lista_empleados = JSON.parse(localStorage.getItem("Negocios"));
+    var temporal=lista_empleados.filter(empleados=>empleados.id!=id);
+    localStorage.setItem("Negocios", JSON.stringify(temporal));
+
+    if(temporal.length==0)
+    { 
+        localStorage.removeItem("Negocios");
+    }
+  
+    read();
 }
 
 function seekR(id){
-    var ref = firebase.database().ref('Negocios/' + id);
-    ref.on('value', function(snapshot) {
-      updateR(snapshot.val());
-    });
+    const lista_empleados = JSON.parse(localStorage.getItem("Negocios"));
+    var empleados=lista_empleados.filter(empleados=>empleados.id==id);
+    //console.log(alumno[0]);
+    updateR(empleados[0]);
 }
 
 function updateR(empleados){
@@ -164,11 +160,14 @@ function updateR(empleados){
 function readQ(){
     document.getElementById("Table2").innerHTML='';
     var c = document.getElementById("Input8").value;
-
-    var ref = firebase.database().ref("Negocios");
-    ref.orderByChild("departamento").equalTo(c).on("child_added", function(snapshot) {
-        printRowQ(snapshot.val());
-    });
+  
+    const lista_empleados = JSON.parse(localStorage.getItem("Negocios"));
+    var empleadosC=lista_empleados.filter(empleados=>empleados.departamento==c);
+    if(empleadosC)
+    {
+        empleadosC.forEach((empleados)=>printRowQ(empleados));
+    }
+    //console.log(alumnosC)
 
 }
 
